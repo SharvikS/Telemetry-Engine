@@ -1,38 +1,48 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import './index.css';
 
-// Connect to the Node relay
 const socket = io('http://localhost:4000');
 
 function App() {
   const [health, setHealth] = useState(100);
   const [isConnected, setIsConnected] = useState(false);
+  const [receivingData, setReceivingData] = useState(false);
+  const timeoutRef = useRef(null);
 
   useEffect(() => {
     socket.on('connect', () => setIsConnected(true));
-    socket.on('disconnect', () => setIsConnected(false));
+    socket.on('disconnect', () => {
+      setIsConnected(false);
+      setReceivingData(false);
+    });
     
-    // Listen for the health metric payload from Python -> Node
-    socket.on('health', (data) => {
+    socket.on('health_update', (data) => {
       if (data && typeof data.health === 'number') {
-        // Ensure it's between 0 and 100
         setHealth(Math.min(100, Math.max(0, data.health)));
+        setReceivingData(true);
+        
+        // Reset the timeout whenever we receive data
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        timeoutRef.current = setTimeout(() => {
+          setReceivingData(false);
+        }, 1500); // 1.5 seconds without data = offline
       }
     });
 
     return () => {
       socket.off('connect');
       socket.off('disconnect');
-      socket.off('health');
+      socket.off('health_update');
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
 
-  // Calculate color based on health (green -> yellow -> red)
   const getHealthColor = () => {
-    if (health > 60) return '#4ade80'; // Emerald green
-    if (health > 30) return '#facc15'; // Yellow
-    return '#ef4444'; // Red
+    if (!receivingData) return '#9ca3af'; // Gray out if no data
+    if (health > 60) return '#4ade80';
+    if (health > 30) return '#facc15';
+    return '#ef4444';
   };
 
   return (
@@ -41,16 +51,18 @@ function App() {
         <header className="header">
           <h1 className="title">Telemetry Engine</h1>
           <div className="status-indicator">
-            <div className={`status-dot ${isConnected ? 'connected' : 'disconnected'}`}></div>
-            <span className="status-text">{isConnected ? 'LIVE' : 'OFFLINE'}</span>
+            <div className={`status-dot ${isConnected ? (receivingData ? 'connected' : 'idle') : 'disconnected'}`}></div>
+            <span className="status-text">
+              {!isConnected ? 'NODE OFFLINE' : (!receivingData ? 'AWAITING GAME DATA' : 'LIVE')}
+            </span>
           </div>
         </header>
 
-        <div className="metric-container">
+        <div className={`metric-container ${!receivingData ? 'dimmed' : ''}`}>
           <h2 className="metric-label">VITAL SIGNS</h2>
           
           <div className="health-value">
-            <span className="value-number">{health.toFixed(1)}</span>
+            <span className="value-number">{receivingData ? health.toFixed(1) : '--'}</span>
             <span className="value-percent">%</span>
           </div>
 
@@ -58,15 +70,14 @@ function App() {
             <div 
               className="progress-bar-fill" 
               style={{ 
-                width: `${health}%`,
+                width: receivingData ? `${health}%` : '0%',
                 backgroundColor: getHealthColor(),
-                boxShadow: `0 0 20px ${getHealthColor()}80`
+                boxShadow: receivingData ? `0 0 20px ${getHealthColor()}80` : 'none'
               }}
             >
-              <div className="shimmer"></div>
+              {receivingData && <div className="shimmer"></div>}
             </div>
           </div>
-          
         </div>
       </div>
     </div>
