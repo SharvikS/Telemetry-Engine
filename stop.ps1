@@ -10,6 +10,14 @@ Write-Host "  ◆ TELEMETRY ENGINE - Shutdown Sequence" -ForegroundColor Red
 Write-Host "  ========================================" -ForegroundColor DarkGray
 Write-Host ""
 
+Get-WmiObject Win32_Process -Filter "name='python.exe' and CommandLine like '%main.py%'" | ForEach-Object {
+    Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+}
+
+Get-WmiObject Win32_Process -Filter "name='python.exe' and CommandLine like '%mock_inference.py%'" | ForEach-Object {
+    Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+}
+
 # Stop Node processes
 $nodeProcesses = Get-Process -Name "node" -ErrorAction SilentlyContinue
 if ($nodeProcesses) {

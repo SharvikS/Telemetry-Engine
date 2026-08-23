@@ -116,14 +116,19 @@ npm run dev
 ```
 *Open your browser to the local Vite URL (usually `http://localhost:5173`)*
 
-#### 3. Run the Python Inference
+#### 3. Run the Python Inference (or Mock)
 ```bash
 cd inference
 pip install -r requirements.txt
+
+# Run the real inference engine (requires Rust capture running)
 python main.py
+
+# OR run the mock inference engine (for UI testing without a game)
+python mock_inference.py
 ```
 
-#### 4. Start the Rust Capture
+#### 4. Start the Rust Capture (if not using mock)
 ```bash
 cd capture
 cargo run --release
