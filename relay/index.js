@@ -11,7 +11,7 @@ io.on("connection", (socket) => {
 
   socket.on("health_update", (data) => {
     // Broadcast the metric to all connected front-end clients
-    io.emit("health", data);
+    io.emit("health_update", data);
   });
 
   socket.on("disconnect", () => {
