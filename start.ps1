@@ -1,23 +1,41 @@
-# Telemetry Engine Unified Launch Script
-Write-Host "Starting Telemetry Engine..." -ForegroundColor Cyan
+# ============================================================
+# Telemetry Engine - Unified Launch Script
+# Starts all four pipeline stages in separate terminal windows
+# ============================================================
 
-# Start Node Relay
-Write-Host "Starting Node Relay (Port 4000)..." -ForegroundColor Green
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd relay; node index.js" -WindowStyle Normal
+$ErrorActionPreference = "Stop"
 
-# Start React Dashboard
-Write-Host "Starting React Dashboard..." -ForegroundColor Blue
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd dashboard; npm run dev" -WindowStyle Normal
+Write-Host ""
+Write-Host "  ◆ TELEMETRY ENGINE - Launch Sequence" -ForegroundColor Green
+Write-Host "  ======================================" -ForegroundColor DarkGray
+Write-Host ""
 
-# Wait 2 seconds for Node/React to initialize
-Start-Sleep -Seconds 2
+# 1. Start Node Relay
+Write-Host "  [1/4] Starting Node Relay (Port 4000)..." -ForegroundColor Cyan
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot\relay'; Write-Host '=== NODE RELAY ===' -ForegroundColor Cyan; node index.js" -WindowStyle Normal
 
-# Start Python Inference
-Write-Host "Starting Python Inference..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd inference; python main.py" -WindowStyle Normal
+# 2. Start React Dashboard
+Write-Host "  [2/4] Starting React Dashboard (Vite)..." -ForegroundColor Blue
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot\dashboard'; Write-Host '=== REACT DASHBOARD ===' -ForegroundColor Blue; npm run dev" -WindowStyle Normal
 
-# Start Rust Capture
-Write-Host "Starting Rust Capture..." -ForegroundColor Red
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd capture; cargo run --release" -WindowStyle Normal
+# Wait for Node/React to spin up
+Write-Host "  [..] Waiting 3 seconds for services to initialize..." -ForegroundColor DarkGray
+Start-Sleep -Seconds 3
 
-Write-Host "All systems GO! Four terminal windows should be active." -ForegroundColor Cyan
+# 3. Start Python Inference
+Write-Host "  [3/4] Starting Python Inference Engine..." -ForegroundColor Yellow
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot\inference'; Write-Host '=== PYTHON INFERENCE ===' -ForegroundColor Yellow; python main.py" -WindowStyle Normal
+
+# 4. Start Rust Capture
+Write-Host "  [4/4] Starting Rust Capture Module..." -ForegroundColor Red
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot\capture'; Write-Host '=== RUST CAPTURE ===' -ForegroundColor Red; cargo run --release" -WindowStyle Normal
+
+Write-Host ""
+Write-Host "  ✓ All systems launched! Four terminal windows should be active." -ForegroundColor Green
+Write-Host ""
+Write-Host "  Dashboard:  http://localhost:5173" -ForegroundColor Cyan
+Write-Host "  Relay:      http://localhost:4000" -ForegroundColor Cyan
+Write-Host "  Health API: http://localhost:4000/health" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "  Press Ctrl+C in each window to stop individual services." -ForegroundColor DarkGray
+Write-Host ""
