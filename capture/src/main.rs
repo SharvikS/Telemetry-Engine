@@ -5,7 +5,7 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 use windows::core::PCWSTR;
-use windows::Win32::Foundation::{CloseHandle, HANDLE};
+use windows::Win32::Foundation::{CloseHandle, HANDLE, INVALID_HANDLE_VALUE};
 use windows::Win32::System::Memory::{
     CreateFileMappingW, MapViewOfFile, UnmapViewOfFile, FILE_MAP_ALL_ACCESS, MEMORY_MAPPED_VIEW_ADDRESS, PAGE_READWRITE,
 };
@@ -28,7 +28,7 @@ fn main() {
     
     let handle = unsafe {
         CreateFileMappingW(
-            HANDLE(0 as _), // INVALID_HANDLE_VALUE
+            INVALID_HANDLE_VALUE,
             None,
             PAGE_READWRITE,
             0,
