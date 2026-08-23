@@ -748,8 +748,66 @@ body {
 .footer-dot { color: var(--border-medium); }
 
 /* ===========================
+   VISUAL EFFECTS OVERLAYS
+   =========================== */
+.damage-vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  pointer-events: none;
+  background: radial-gradient(circle, transparent 40%, rgba(239, 68, 68, 0.4) 120%);
+  opacity: 0;
+  transition: opacity 0.1s ease-out;
+}
+
+.damage-vignette.active {
+  opacity: 1;
+  transition: opacity 0.5s ease-in;
+}
+
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 98;
+  background: rgba(3, 3, 4, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: var(--text-secondary);
+}
+
+.loading-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--accent-purple);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  box-shadow: 0 0 20px rgba(167, 139, 250, 0.2);
+}
+
+/* ===========================
    ANIMATIONS
    =========================== */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 @keyframes shimmer {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); }

@@ -16,6 +16,7 @@ function App() {
     isConnected, receivingData, clientCount, systemInfo,
     peakFps, minHealth, totalFrames,
     events, uptime,
+    gameState, damageEvent
   } = useSocket();
 
   const formatUptime = (seconds) => {
@@ -29,6 +30,13 @@ function App() {
 
   return (
     <div className="dashboard-container">
+      {/* Visual Effects Overlays */}
+      <div className={`damage-vignette ${damageEvent ? 'active' : ''}`}></div>
+      <div className={`loading-overlay ${gameState === 'LOADING' ? 'active' : ''}`}>
+        <div className="loading-spinner"></div>
+        <span>AWAITING SCENE...</span>
+      </div>
+
       {/* Animated background */}
       <div className="bg-particles">
         <div className="particle p1"></div>

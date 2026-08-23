@@ -165,6 +165,8 @@ def run_inference():
     frame_times = deque(maxlen=FPS_WINDOW_SIZE)
     last_frame_count = -1
     last_stats_time = time.time()
+    last_health = None
+    last_game_state = None
 
     try:
         while running:
@@ -258,6 +260,9 @@ def run_inference():
 
                         # 4. Average Brightness (Value Channel Mean)
                         brightness = float(cv2.mean(hsv[:, :, 2])[0])
+                        
+                        # Game State Detection (Loading screens are usually very dark)
+                        current_game_state = "LOADING" if brightness < 15.0 else "PLAYING"
 
                         # ISO 8601 Timestamp
                         timestamp_iso = datetime.now(timezone.utc).isoformat()
@@ -287,6 +292,22 @@ def run_inference():
                                 sio.emit('health_update', {'health': round(normalized_health, 2)})
                                 # Comprehensive telemetry update
                                 sio.emit('telemetry_update', telemetry_payload)
+                                
+                                # Damage Detection
+                                if last_health is not None:
+                                    health_delta = normalized_health - last_health
+                                    if health_delta <= -2.0:
+                                        sio.emit('damage_taken', {'amount': round(abs(health_delta), 2), 'timestamp': timestamp_iso})
+                                        print(f"{RED}[DAMAGE]{RESET} Took {abs(health_delta):.1f}% damage!")
+                                
+                                # Game State Detection
+                                if current_game_state != last_game_state:
+                                    sio.emit('game_state_update', {'state': current_game_state, 'timestamp': timestamp_iso})
+                                    color = MAGENTA if current_game_state == "LOADING" else GREEN
+                                    print(f"{color}[STATE]{RESET} Game state changed to {current_game_state}")
+                                
+                                last_health = normalized_health
+                                last_game_state = current_game_state
                             except Exception as emit_err:
                                 print(f"{RED}[ERROR]{RESET} Emit error: {emit_err}")
 

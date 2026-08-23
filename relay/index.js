@@ -140,6 +140,27 @@ io.on("connection", (socket) => {
     );
   });
 
+  // 4. Game State Update
+  socket.on("game_state_update", (data) => {
+    const payload = typeof data === "object" && data !== null ? { ...data } : { state: data };
+    payload.server_timestamp = Date.now();
+    io.emit("game_state_update", payload);
+    const color = payload.state === "LOADING" ? colors.magenta : colors.green;
+    console.log(
+      `${color}🎮 [GAME STATE]${colors.reset} Transitioned to ${colors.bold}${payload.state}${colors.reset}`
+    );
+  });
+
+  // 5. Damage Taken Event
+  socket.on("damage_taken", (data) => {
+    const payload = typeof data === "object" && data !== null ? { ...data } : { amount: data };
+    payload.server_timestamp = Date.now();
+    io.emit("damage_taken", payload);
+    console.log(
+      `${colors.red}💥 [DAMAGE]${colors.reset} Took ${colors.bold}${payload.amount}%${colors.reset} damage!`
+    );
+  });
+
   // Handle client disconnect
   socket.on("disconnect", (reason) => {
     connectedClients = Math.max(0, connectedClients - 1);

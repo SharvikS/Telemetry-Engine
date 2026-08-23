@@ -42,6 +42,10 @@ export default function useSocket() {
   // Event log
   const [events, setEvents] = useState([]);
 
+  // Game State & Effects
+  const [gameState, setGameState] = useState("PLAYING");
+  const [damageEvent, setDamageEvent] = useState(null);
+
   // Uptime
   const [uptime, setUptime] = useState(0);
   const uptimeStart = useRef(null);
@@ -95,11 +99,6 @@ export default function useSocket() {
         setHealth(h);
         pushHistory(setHealthHistory, h);
         setMinHealth(prev => Math.min(prev, h));
-
-        const prev = lastHealthRef.current;
-        if (h < 15 && prev >= 15) addEvent('danger', '💀', `CRITICAL HEALTH: ${h.toFixed(1)}%`);
-        else if (h < 30 && prev >= 30) addEvent('warning', '⚠️', `Low health: ${h.toFixed(1)}%`);
-        else if (h > 80 && prev <= 80) addEvent('success', '💚', `Health recovered: ${h.toFixed(1)}%`);
         lastHealthRef.current = h;
       }
       if (typeof data.stamina === 'number') {
@@ -153,6 +152,27 @@ export default function useSocket() {
       if (data && typeof data.count === 'number') setClientCount(data.count);
     });
 
+    socket.on('game_state_update', (data) => {
+      if (data && data.state) {
+        setGameState(data.state);
+        if (data.state === "LOADING") {
+          addEvent('info', '⏳', 'Entering loading screen');
+        } else {
+          addEvent('success', '🎮', 'Game active');
+        }
+      }
+    });
+
+    socket.on('damage_taken', (data) => {
+      if (data && typeof data.amount === 'number') {
+        addEvent('danger', '💥', `Took ${data.amount.toFixed(1)}% damage`);
+        // Trigger visual effect
+        setDamageEvent(Date.now());
+        // Clear effect after 500ms
+        setTimeout(() => setDamageEvent(null), 500);
+      }
+    });
+
     return () => {
       socket.off('connect');
       socket.off('disconnect');
@@ -160,6 +180,8 @@ export default function useSocket() {
       socket.off('health_update');
       socket.off('system_info');
       socket.off('client_count');
+      socket.off('game_state_update');
+      socket.off('damage_taken');
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, [addEvent, pushHistory]);
@@ -170,5 +192,6 @@ export default function useSocket() {
     isConnected, receivingData, clientCount, systemInfo,
     peakFps, minHealth, totalFrames,
     events, uptime,
+    gameState, damageEvent
   };
 }
